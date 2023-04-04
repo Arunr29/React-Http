@@ -1,21 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useState } from 'react';
+import AddMovie from './components/AddMovie';
 
 import MoviesList from './components/MoviesList';
 import './App.css';
+import { useCallback } from 'react';
 
 function App() {
 
   const baseUrl = "https://swapi.dev/api/films/";
+  const firebaseUrl = "https://react-http-922dd-default-rtdb.firebaseio.com/movies.json";
   const defaultMovies = [];
   const [movies, setMovies] = useState(defaultMovies);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchMovies = () => {
+  const fetchMovies = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetch(baseUrl).then(response => {
+    fetch(firebaseUrl).then(response => {
       if (!response.ok) {
         throw new Error('Something went wrong');
       }
@@ -25,18 +28,47 @@ function App() {
       setError(err.message);
     })
       .then(data => {
-        console.log(data.results)
-        const transformData = data.results.map(value => {
-          return {
-            id: value.episode_id,
-            title: value.title,
-            releaseDate: value.release_date,
-            openingText: value.opening_crawl
-          }
-        })
-        setMovies(transformData);
+        console.log(data)
+        const loadedMovies = [];
+        for(const key in data){
+          // console.log(data[key].title)
+          loadedMovies.push({
+            id:key,
+            title:data[key].title,
+            openingText:data[key].openingText,
+            releaseDate:data[key].releaseDate
+
+          })
+        }
+        // const transformData = data.results.map(value => {
+        //   return {
+        //     id: value.episode_id,
+        //     title: value.title,
+        //     releaseDate: value.release_date,
+        //     openingText: value.opening_crawl
+        //   }
+        // })
+        setMovies(loadedMovies);
         setLoading(false);
       });
+  }, []);// for dependency array
+
+  //acts like ngOninit function
+  useEffect(() => {
+    fetchMovies();
+  }, [fetchMovies]);
+
+  async function addMovieHandler(movie) {
+    console.log(movie);
+    const reponse = await await fetch(firebaseUrl, {
+      method: 'POST',
+      body: (JSON.stringify(movie)),
+      headers:{
+        'Content-Type':'application/json'
+      }
+    });
+    const data = await reponse.json();
+    console.log(data);
   }
 
   //using try n catch (async and await)
@@ -68,6 +100,7 @@ function App() {
   //   setLoading(false);
   // }
 
+
   //this is a great example where should use let and const
   let content = <p> Found no movies...</p>
 
@@ -78,11 +111,14 @@ function App() {
     content = <p>{error}</p>
   }
   if (isLoading) {
- content = <p>Loading..</p>
+    content = <p>Loading..</p>
   }
 
   return (
     <React.Fragment>
+      <section>
+        <AddMovie onAddMovie={addMovieHandler} />
+      </section>
       <section>
         <button onClick={fetchMovies}>Fetch Movies</button>
       </section>
