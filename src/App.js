@@ -30,13 +30,13 @@ function App() {
       .then(data => {
         console.log(data)
         const loadedMovies = [];
-        for(const key in data){
+        for (const key in data) {
           // console.log(data[key].title)
           loadedMovies.push({
-            id:key,
-            title:data[key].title,
-            openingText:data[key].openingText,
-            releaseDate:data[key].releaseDate
+            id: key,
+            title: data[key].title,
+            openingText: data[key].openingText,
+            releaseDate: data[key].releaseDate
 
           })
         }
@@ -58,19 +58,48 @@ function App() {
     fetchMovies();
   }, [fetchMovies]);
 
-  async function addMovieHandler(movie) {
-    console.log(movie);
-    const reponse = await await fetch(firebaseUrl, {
-      method: 'POST',
-      body: (JSON.stringify(movie)),
-      headers:{
-        'Content-Type':'application/json'
+  // (async and await)
+  // async function addMovieHandler(movie) {
+  //   console.log(movie);
+  //   const reponse = await await fetch(firebaseUrl, {
+  //     method: 'POST',
+  //     body: (JSON.stringify(movie)),
+  //     headers:{
+  //       'Content-Type':'application/json'
+  //     }
+  //   });
+  //   const data = await reponse.json();
+  //   console.log(data);
+  // }
+  function addMovieHandler(movie) {
+    fetch(firebaseUrl, {
+      method: "POST",
+      body: JSON.stringify(movie),
+      headers: {
+        "Content-Type": "application/json"
       }
-    });
-    const data = await reponse.json();
-    console.log(data);
+    }).then(res => {
+      return res.json();
+    }).then(data => {
+      console.log(data);
+    })
   }
 
+  function deleteMovies() {
+    fetch(firebaseUrl, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error('Something went wrong');
+      }
+      return res.json();
+    }).catch((err) => {
+      console.log(err.message);
+    })
+  }
   //using try n catch (async and await)
   // async function fetchMovies() {
   //   setLoading(true);
@@ -121,6 +150,7 @@ function App() {
       </section>
       <section>
         <button onClick={fetchMovies}>Fetch Movies</button>
+        {movies.length > 0 ? <button onClick={deleteMovies}>Delete Movies</button>:''}
       </section>
       <section>
         {content}
